@@ -1,6 +1,18 @@
 # lerobot_from_scratch
 Repo to reproduce lerobot imitation learning from scratch (Purely for learning purpose)
 
+- [Breakdown of lerobot IL pipeline](#breakdown-of-lerobot-il-pipeline)
+  - [Lerobot find port](#lerobot-find-port)
+  - [Motor Setup](#motor-setup)
+  - [Robot Calibration](#robot-calibration)
+  - [Robot Teleoperate](#robot-teleoperate)
+  - [Find Cameras](#find-cameras)
+  - [Record the dataset](#record-the-dataset)
+  - [Visualise the dataset](#visualise-the-dataset)
+  - [Replay an episode](#replay-an-episode)
+  - [Training](#training)
+- [Schedule](#schedule)
+
 ## Breakdown of lerobot IL pipeline
 
 [Original repo](https://github.com/huggingface/lerobot)
@@ -112,8 +124,19 @@ Weights and biases setup, policy setup, dataloader setup, and generic training l
 
 
 
+## Schedule
 
-
+| Script                | Learning Level (0-5) | Effort | Implement? |
+|-----------------------|----------------------|--------|------------|
+| lerobot-find-port     | 0                    | N/A    |    -       |
+| lerobot-motor-setup   | 0                    | N/A    |-           |
+| lerobot-calibration   | 0                    | N/A    |-           |
+| lerobot-teleoperate   | 3                    |        |            |
+| lerobot-find-cameras  | 0                    | N/A    |-           |
+| lerobot-record-dataset| 5                    |        |            |
+| lerobot-visualize     | 2                    |        |            |
+| lerobot-replay        | 2                    |        |            |
+| lerobot-training      | 5                    |        |            |
 
 
 
