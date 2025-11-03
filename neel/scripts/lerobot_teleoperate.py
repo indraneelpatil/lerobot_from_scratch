@@ -3,14 +3,22 @@ Created by Indraneel on 11/02/2025
 
 Teleoperate Lerobot
 
+python scripts/lerobot_teleoperate.py \
+    --robot.type=so101_follower \
+    --robot.port=/dev/ttyACM1 \
+    --robot.id=singles_inferno_dex_follower \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/ttyACM0 \
+    --teleop.id=singles_inferno_dex_leader
+
 """
 
 from dataclasses import dataclass
 import time
 
 from lerobot.utils.utils import init_logging
-from lerobot.teleoperators import TeleoperatorConfig, make_teleoperator_from_config, Teleoperator
-from lerobot.robots import RobotConfig, make_robot_from_config, Robot
+from lerobot.teleoperators import TeleoperatorConfig, make_teleoperator_from_config, Teleoperator, so101_leader
+from lerobot.robots import RobotConfig, make_robot_from_config, Robot, so101_follower
 from lerobot.configs import parser
 from lerobot.processor import make_default_processors, RobotProcessorPipeline, RobotAction, RobotObservation
 from lerobot.utils.robot_utils import busy_wait
