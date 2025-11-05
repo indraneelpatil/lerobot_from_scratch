@@ -11,8 +11,8 @@ from typing import Any
 import logging
 
 from lerobot.configs import parser
-from lerobot.robots import RobotConfig, make_robot_from_config, Robot
-from lerobot.teleoperators import TeleoperatorConfig, make_teleoperator_from_config, Teleoperator
+from lerobot.robots import RobotConfig, make_robot_from_config, Robot, so101_follower
+from lerobot.teleoperators import TeleoperatorConfig, make_teleoperator_from_config, Teleoperator, so101_leader
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
@@ -43,6 +43,8 @@ class DatasetRecordConfig:
     fps: int = 30
     # Seconds of data recording for each episode
     episode_time_s: int | float = 60
+    # Number of seconds to reset the environment
+    reset_time_s: int | float = 60
     # Number of episodes
     num_episodes: int = 50
     # Encode frames in dataset into video
@@ -234,7 +236,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
             )
 
             # Sleep for 10 seconds
-            time.sleep(10)
+            time.sleep(cfg.dataset.reset_time_s)
 
             dataset.save_episode()
             recorded_episodes += 1
