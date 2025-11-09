@@ -25,6 +25,8 @@ import time
 from typing import Any
 import logging
 
+from lerobot.cameras import CameraConfig
+from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
 from lerobot.configs import parser
 from lerobot.robots import RobotConfig, make_robot_from_config, Robot, so101_follower
 from lerobot.teleoperators import TeleoperatorConfig, make_teleoperator_from_config, Teleoperator, so101_leader
@@ -252,6 +254,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
                 single_task=cfg.dataset.single_task,
                 display_data=cfg.display_data
             )
+            print(f"Finished recording")
 
             # Sleep for 10 seconds
             time.sleep(cfg.dataset.reset_time_s)
@@ -259,6 +262,7 @@ def record(cfg: RecordConfig) -> LeRobotDataset:
             if events["rerecord_episode"]:
                 print("Re recording episode")
                 events["rerecord_episode"] = False
+                events["exit_early"] = False
                 dataset.clear_episode_buffer()
                 continue
 
