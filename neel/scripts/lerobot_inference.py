@@ -1,7 +1,17 @@
 """
 Created by Indraneel on 11/08/2025
 
-
+python scripts/lerobot_inference.py \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=singles_inferno_dex_follower \
+  --robot.cameras "{ wrist: {type: opencv, index_or_path: 2, width: 640, height: 480, fps: 30}, top: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+  --dataset.single_task="Grasp popcorn and put it in the bin." \
+  --dataset.repo_id=indraneelpatil/eval_lerobot_with_cameras_test \
+  --dataset.episode_time_s=50 \
+  --dataset.num_episodes=10 \
+  --policy.path=lerobot/smolvla_base \
+  --display_data=true
 
 """
 from pathlib import Path
@@ -199,7 +209,7 @@ def inference(cfg: RecordConfig):
                 
             
             dataset.save_episode()
-            recorded_episode +=1
+            recorded_episodes +=1
     
     print("Stop recording")
 
