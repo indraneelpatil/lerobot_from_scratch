@@ -9,6 +9,10 @@ import logging
 import torch
 from torch.amp import GradScaler
 from termcolor import colored
+import time
+from typing import Any
+from torch.optim import Optimizer
+from contextlib import nullcontext
 
 from lerobot.utils.utils import init_logging
 from lerobot.configs import parser
@@ -21,8 +25,41 @@ from lerobot.datasets.factory import make_dataset
 from lerobot.datasets.sampler import EpisodeAwareSampler
 from lerobot.datasets.utils import cycle
 from lerobot.policies.factory import make_policy, make_pre_post_processors
+from lerobot.policies.pretrained import PreTrainedPolicy
+from lerobot.policies.utils import get_device_from_parameters
 from lerobot.optim.factory import make_optimizer_and_scheduler
+from lerobot.utils.train_utils import get_step_checkpoint_dir, save_checkpoint, update_last_checkpoint
 
+
+def update_policy(
+        train_metrics: MetricsTracker,
+        policy: PreTrainedPolicy,
+        batch: Any,
+        optimizer: Optimizer,
+        grad_clip_norm: float,
+        grad_scaler: GradScaler,
+        lr_scheduler=None,
+        use_amp: bool=False,
+        lock=None,
+) -> tuple[MetricsTracker, dict]:
+    """ Single Training step to update the policy's weights"""
+    start_time = time.perf_counter()
+    device = get_device_from_parameters(policy)
+    policy.train()
+    with torch.autocast(device_type=device.type) if use_amp else nullcontext():
+        loss, output_dict = policy.forward(batch)
+    
+    grad_scaler.scale(loss).backward()
+
+    # Unscale the gradient of the optimizers assigned params
+    grad_scaler.unscale_(optimizer)
+
+    grad_norm = torch.nn.utils.clip_grad_norm_(
+        policy.parameters(),
+        grad_clip_norm,
+        error_if_nonfinite=False
+    )
+    pass
 
 @parser.wrap()
 def train(cfg: TrainPipelineConfig):
@@ -144,7 +181,43 @@ def train(cfg: TrainPipelineConfig):
     )
     logging.info("Start offline training on a fixed dataset")
     for _ in range(step, cfg.steps):
-        pass
+        start_time = time.perf_counter()
+        batch = next(dl_iter)
+        batch = preprocessor(batch)
+        train_tracker.dataloading_s = time.perf_counter() - start_time
+
+        train_tracker, output_dict = update_policy()
+
+        step += 1
+        train_tracker.step()
+        is_log_step = cfg.log_freq > 0 and step % cfg.log_freq == 0
+        is_saving_step = step % cfg.save_freq == 0 or step == cfg.steps
+        is_eval_step = cfg.eval_freq > 0 and step % cfg.eval_freq == 0
+
+        if is_log_step:
+            logging.info(train_tracker)
+            if wandb_logger:
+                wandb_log_dict = train_tracker.to_dict()
+                if output_dict:
+                    wandb_log_dict.update(output_dict)
+                wandb_logger.log_dict(wandb_log_dict, step)
+            train_tracker.reset_averages()    
+
+        if cfg.save_checkpoint and is_saving_step:
+            logging.info(f"Checkpoint policy after step {step}")
+            checkpoint_dir = get_step_checkpoint_dir(cfg.output_dir, cfg.steps, step) 
+            save_checkpoint(
+                checkpoint_dir, step, cfg, policy, optimizer, lr_scheduler, preprocessor, postprocessor
+            )
+            update_last_checkpoint(checkpoint_dir)
+            if wandb_logger:
+                wandb_logger.log_policy(checkpoint_dir)
+
+        
+    if cfg.policy.push_to_hub:
+        policy.push_model_to_hub(cfg)
+        preprocessor.push_to_hub(cfg.policy.repo_id)
+        postprocessor.push_to_hub(cfg.policy.repo_id)
 
 
 def main():
