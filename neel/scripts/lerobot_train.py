@@ -2,6 +2,16 @@
 Created by Indraneel on 11/10/2025
 
 
+python scripts/lerobot_train.py  \
+  --policy.path=lerobot/smolvla_base \
+  --policy.repo_id=indraneelpatil/smolVLA-fine-tuning1 \
+  --dataset.repo_id=indraneelpatil/lerobot-teleop-with-cameras \
+  --batch_size=64 \
+  --steps=20000 \
+  --output_dir=outputs/train/my_smolvla \
+  --job_name=my_smolvla_training \
+  --policy.device=cuda \
+  --wandb.enable=true
 
 """
 import logging
@@ -249,7 +259,9 @@ def train(cfg: TrainPipelineConfig):
             if wandb_logger:
                 wandb_logger.log_policy(checkpoint_dir)
 
-        
+    
+    logging.info("End of training")
+    
     if cfg.policy.push_to_hub:
         policy.push_model_to_hub(cfg)
         preprocessor.push_to_hub(cfg.policy.repo_id)
